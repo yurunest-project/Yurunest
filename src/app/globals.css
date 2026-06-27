@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@theme {
+  --color-sage: #6e8b74;
+  --color-sage-light: #8aa590;
+  --color-sage-dark: #5a7560;
+  --color-ivory: #f5f3ef;
+  --color-forest: #2a342d;
+  --color-forest-muted: #4a5a50;
+}
+
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply bg-ivory text-forest antialiased;
+    font-family:
+      "Hiragino Sans",
+      "Hiragino Kaku Gothic ProN",
+      "Yu Gothic Medium",
+      "Noto Sans JP",
+      sans-serif;
+    font-feature-settings: "palt";
+  }
+
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-sage;
+  }
+}
