@@ -7,14 +7,58 @@ const reasons = [
       "身元が保証された優しいひな社員が、いつも同じ安心感で対応します。",
   },
   {
-    title: "15分750円の破格",
+    title: "15分500円から気軽に",
     description:
-      "入会金・月会費のサブスクの仕組みで、必要な夜だけ気軽にご利用いただけます。",
+      "入会金・月会費なし。必要な夜だけ、時間を選んでご利用いただけます。長めのご利用ほど1分あたりの料金もお得になります。",
   },
   {
     title: "安心の【事前決済 ＆ 全額返金保証】",
     description:
       "少しでもご満足いただけなかった場合、理由を問わず全額返金いたします。お金を無駄にするリスクは一切ありません。",
+  },
+] as const;
+
+const pricingPlans = [
+  {
+    duration: "15分",
+    price: 500,
+    unitPrice: "約33円/分",
+    note: "まず試したい方に",
+    recommended: false,
+    featured: false,
+  },
+  {
+    duration: "30分",
+    price: 900,
+    unitPrice: "30円/分",
+    note: "お話しするのにちょうどいい時間です",
+    recommended: true,
+    featured: false,
+  },
+  {
+    duration: "1時間",
+    price: 1600,
+    unitPrice: "約26円/分",
+    note: null,
+    recommended: false,
+    featured: false,
+  },
+  {
+    duration: "3時間",
+    price: 4500,
+    unitPrice: "約25円/分",
+    note: null,
+    recommended: false,
+    featured: false,
+  },
+  {
+    duration: "寝落ちパック",
+    subtitle: "5時間以上",
+    price: 6500,
+    unitPrice: "約21円/分",
+    note: "長時間のご利用に",
+    recommended: false,
+    featured: true,
   },
 ] as const;
 
@@ -55,6 +99,94 @@ function SectionHeading({
   );
 }
 
+function formatPrice(yen: number) {
+  return yen.toLocaleString("ja-JP");
+}
+
+function PricingTable() {
+  return (
+    <div>
+      <p className="mb-5 pl-4 text-base leading-relaxed text-forest-muted">
+        入会金・月会費はかかりません。ご希望の時間を選んで、事前決済でご予約ください。
+      </p>
+
+      <div className="overflow-hidden rounded-2xl border border-sage/20 bg-white">
+        <div
+          className="grid grid-cols-[1fr_auto] gap-x-4 border-b border-sage/15 bg-sage/8 px-4 py-3 text-xs font-medium tracking-wide text-forest-muted sm:grid-cols-[1fr_auto_auto] sm:px-5"
+          aria-hidden="true"
+        >
+          <span>プラン</span>
+          <span className="text-right">料金（税込）</span>
+          <span className="hidden text-right sm:block">1分あたり</span>
+        </div>
+
+        <ul role="list">
+          {pricingPlans.map((plan) => (
+            <li
+              key={plan.duration}
+              className={`border-b border-sage/10 last:border-b-0 ${
+                plan.featured
+                  ? "bg-sage/10"
+                  : plan.recommended
+                    ? "bg-sage/5"
+                    : ""
+              }`}
+            >
+              <div className="grid grid-cols-[1fr_auto] items-center gap-x-4 px-4 py-4 sm:grid-cols-[1fr_auto_auto] sm:gap-x-6 sm:px-5 sm:py-5">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-base font-medium text-forest sm:text-lg">
+                      {plan.duration}
+                      {"subtitle" in plan && (
+                        <span className="ml-1.5 text-sm font-normal text-forest-muted">
+                          （{plan.subtitle}）
+                        </span>
+                      )}
+                    </p>
+                    {plan.recommended && (
+                      <span className="rounded-full bg-sage px-2 py-0.5 text-xs font-medium text-white">
+                        おすすめ
+                      </span>
+                    )}
+                    {plan.featured && (
+                      <span className="rounded-full border border-sage/40 bg-ivory px-2 py-0.5 text-xs font-medium text-sage-dark">
+                        お得
+                      </span>
+                    )}
+                  </div>
+                  {plan.note && (
+                    <p className="mt-1 text-sm text-forest-muted">{plan.note}</p>
+                  )}
+                  <p className="mt-1 text-sm text-sage sm:hidden">
+                    {plan.unitPrice}
+                  </p>
+                </div>
+
+                <p className="text-right">
+                  <span className="text-xl font-bold tabular-nums text-forest sm:text-2xl">
+                    {formatPrice(plan.price)}
+                  </span>
+                  <span className="ml-0.5 text-sm font-medium text-forest-muted">
+                    円
+                  </span>
+                </p>
+
+                <p className="hidden text-right text-sm tabular-nums text-forest-muted sm:block">
+                  {plan.unitPrice}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      <p className="mt-4 pl-4 text-sm leading-relaxed text-forest-muted">
+        ※ 長時間ほど1分あたりの料金が下がります。表示価格はすべて税込です。
+      </p>
+    </div>
+  );
+}
+
 function ReserveButton({
   className = "",
   compact = false,
@@ -74,7 +206,7 @@ function ReserveButton({
       <span className="block leading-snug">今夜の安心を予約する</span>
       {!compact && (
         <span className="mt-1 block text-sm font-medium text-white/85 sm:text-base">
-          全額返金保証付き · 15分750円
+          全額返金保証付き · 15分500円〜
         </span>
       )}
     </a>
@@ -120,7 +252,7 @@ export default function HomePage() {
             「ゆるネスト」とは
           </SectionHeading>
           <p className="pl-4 text-base leading-[2] text-forest-muted sm:text-lg">
-            夜眠れなくて寂しい「ひなユーザーさん」と、お家から一歩を踏み出したい「ひな社員（スタッフ）」を優しく繋ぐ、安眠基地プラットフォーム。
+            夜眠れなくて寂しい「ひなユーザーさん」と、お家から一歩を踏み出したい「ひな社員（スタッフ）」を優しく繋ぐ、安眠基地プラットフォームです。
           </p>
         </section>
 
@@ -150,6 +282,13 @@ export default function HomePage() {
               </article>
             ))}
           </div>
+        </section>
+
+        <section className="mb-14" aria-labelledby="pricing-heading">
+          <SectionHeading id="pricing-heading" label="PRICE">
+            料金表
+          </SectionHeading>
+          <PricingTable />
         </section>
 
         <section className="mb-14" aria-labelledby="flow-heading">
