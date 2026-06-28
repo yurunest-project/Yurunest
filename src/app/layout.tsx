@@ -5,7 +5,11 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "ゆるネスト | 誰かの声が聴きたい夜に",
   description:
-    "夜眠れなくて寂しいひなユーザーさんと、お家から一歩を踏み出したいひな社員を優しく繋ぐ、安眠基地プラットフォーム。15分750円・全額返金保証。",
+    "夜眠れなくて寂しいひなユーザーさんと、お家から一歩を踏み出したいひな社員を優しく繋ぐ、安眠基地プラットフォーム。15分500円〜・全額返金保証。",
+  icons: {
+    icon: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({
