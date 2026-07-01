@@ -1,13 +1,18 @@
 "use client";
 
-import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useId, useState } from "react";
 import { navItems } from "@/lib/navigation";
 import { SiteLogo } from "./SiteLogo";
 
 export function SiteHeader() {
   const [open, setOpen] = useState(false);
+  const pathname = usePathname();
   const drawerId = useId();
+
+  useEffect(() => {
+    setOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!open) return;
@@ -127,13 +132,15 @@ export function SiteHeader() {
             <ul className="flex flex-col px-3 py-4">
               {navItems.map(({ href, label }) => (
                 <li key={href}>
-                  <Link
+                  <a
                     href={href}
                     className="block rounded-lg px-3 py-3.5 text-base text-forest transition-colors hover:bg-sage/10 hover:text-sage-dark focus-visible:outline-offset-2"
-                    onClick={close}
+                    onClick={() => {
+                      if (href === pathname) close();
+                    }}
                   >
                     {label}
-                  </Link>
+                  </a>
                 </li>
               ))}
             </ul>

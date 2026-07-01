@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/SectionHeading";
+import { BOOKING_PLANS, HITOMOSHI_URL } from "@/lib/constants";
+import { hitomoshiLinks } from "@/lib/navigation";
 
 const reasons = [
   {
@@ -19,62 +21,18 @@ const reasons = [
   },
 ] as const;
 
-const pricingPlans = [
-  {
-    duration: "15分",
-    price: 500,
-    unitPrice: "約33円/分",
-    note: "まず試したい方に",
-    recommended: false,
-    featured: false,
-  },
-  {
-    duration: "30分",
-    price: 900,
-    unitPrice: "30円/分",
-    note: "お話しするのにちょうどいい時間です",
-    recommended: true,
-    featured: false,
-  },
-  {
-    duration: "1時間",
-    price: 1600,
-    unitPrice: "約26円/分",
-    note: null,
-    recommended: false,
-    featured: false,
-  },
-  {
-    duration: "3時間",
-    price: 4500,
-    unitPrice: "約25円/分",
-    note: null,
-    recommended: false,
-    featured: false,
-  },
-  {
-    duration: "寝落ちパック",
-    subtitle: "5時間以上",
-    price: 6500,
-    unitPrice: "約21円/分",
-    note: "長時間のご利用に",
-    recommended: false,
-    featured: true,
-  },
-] as const;
-
 const steps = [
   {
     step: 1,
-    title: "予約フォームから日時を選んで前払い",
+    title: "プランを選び、Stripeで事前決済",
   },
   {
     step: 2,
-    title: "専用のDiscordサーバーへご招待",
+    title: "決済完了メールに通話URLが届く",
   },
   {
     step: 3,
-    title: "時間になったらDiscordの静かな通話室でスタート",
+    title: "予約時間になったら、ブラウザから通話スタート",
   },
 ] as const;
 
@@ -86,7 +44,7 @@ function PricingTable() {
   return (
     <div>
       <p className="mb-5 pl-4 text-base leading-relaxed text-forest-muted">
-        入会金・月会費はかかりません。ご希望の時間を選んで、事前決済でご予約ください。
+        入会金・月会費はかかりません。ご希望の時間を選んで、Stripeで事前決済してください。
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-sage/20 bg-white">
@@ -100,9 +58,9 @@ function PricingTable() {
         </div>
 
         <ul role="list">
-          {pricingPlans.map((plan) => (
+          {BOOKING_PLANS.map((plan) => (
             <li
-              key={plan.duration}
+              key={plan.id}
               className={`border-b border-sage/10 last:border-b-0 ${
                 plan.featured
                   ? "bg-sage/10"
@@ -115,8 +73,8 @@ function PricingTable() {
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
                     <p className="text-base font-medium text-forest sm:text-lg">
-                      {plan.duration}
-                      {"subtitle" in plan && (
+                      {plan.label}
+                      {"subtitle" in plan && plan.subtitle && (
                         <span className="ml-1.5 text-sm font-normal text-forest-muted">
                           （{plan.subtitle}）
                         </span>
@@ -174,8 +132,8 @@ function ReserveButton({
   compact?: boolean;
 }) {
   return (
-    <a
-      href="#"
+    <Link
+      href="/book"
       className={`group block w-full rounded-xl bg-sage-dark text-center font-bold text-white shadow-[0_6px_24px_rgba(42,52,45,0.18)] ring-2 ring-sage/40 transition-all hover:bg-[#4a6350] hover:shadow-[0_8px_28px_rgba(42,52,45,0.24)] hover:ring-sage/60 active:scale-[0.98] focus-visible:outline-offset-4 ${
         compact
           ? "px-4 py-3.5 text-base"
@@ -188,7 +146,7 @@ function ReserveButton({
           全額返金保証付き · 15分500円〜
         </span>
       )}
-    </a>
+    </Link>
   );
 }
 
@@ -231,7 +189,18 @@ export default function HomePage() {
             「ゆるネスト」とは
           </SectionHeading>
           <p className="pl-4 text-base leading-[2] text-forest-muted sm:text-lg">
-            夜眠れなくて寂しい「ひなユーザーさん」と、お家から一歩を踏み出したい「ひな社員（スタッフ）」を優しく繋ぐ、安眠基地プラットフォームです。
+            夜眠れなくて寂しい「ひなユーザーさん」と、お家から一歩を踏み出したい「ひな社員（スタッフ）」を優しく繋ぐ、ブラウザ完結の安眠基地プラットフォームです。
+          </p>
+          <p className="mt-4 pl-4 text-sm text-forest-muted">
+            運営：
+            <a
+              href={HITOMOSHI_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sage-dark underline-offset-4 hover:underline"
+            >
+              ひともし
+            </a>
           </p>
         </section>
 
@@ -326,23 +295,38 @@ export default function HomePage() {
           className="mb-6 flex flex-col items-center gap-3 pt-4 sm:flex-row sm:justify-center sm:gap-6"
           aria-label="法的情報"
         >
-          <Link
-            href="/tokushoho"
+          <a
+            href={hitomoshiLinks.tokushoho}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-base text-forest-muted underline-offset-4 transition-colors hover:text-sage-dark hover:underline"
           >
             特定商取引法に基づく表記
-          </Link>
-          <Link
-            href="/privacy"
+          </a>
+          <a
+            href={hitomoshiLinks.privacy}
+            target="_blank"
+            rel="noopener noreferrer"
             className="text-base text-forest-muted underline-offset-4 transition-colors hover:text-sage-dark hover:underline"
           >
             プライバシーポリシー
-          </Link>
+          </a>
         </nav>
       </main>
 
       <footer className="border-t border-sage/15 bg-ivory px-5 py-6 text-center">
-        <p className="text-base text-forest-muted">© 2026 Yurunest Project</p>
+        <p className="text-base text-forest-muted">
+          運営：
+          <a
+            href={HITOMOSHI_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-sage-dark underline-offset-4 hover:underline"
+          >
+            ひともし
+          </a>
+        </p>
+        <p className="mt-2 text-base text-forest-muted">© 2026 Yurunest Project</p>
       </footer>
 
       <div
