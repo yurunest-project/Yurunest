@@ -1,6 +1,12 @@
 export const navItems = [
   { href: "/", label: "Home" },
-  { href: "/privacy", label: "プライバシーポリシー" },
-  { href: "/tokushoho", label: "特定商取引法に基づく表記" },
+  { href: "/about", label: "サービスについて" },
+  { href: "/book", label: "予約する" },
   { href: "/recruit", label: "採用情報" },
 ] as const;
+
+export const hitomoshiLinks = {
+  home: "https://hitomoshi-one.vercel.app/",
+  privacy: "https://hitomoshi-one.vercel.app/#privacy",
+  tokushoho: "https://hitomoshi-one.vercel.app/#legal",
+} as const;

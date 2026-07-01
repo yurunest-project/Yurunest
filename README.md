@@ -8,12 +8,19 @@ git checkout -b branch01
 git add .
 git commit -m "コミットメッセージ"
 3.プルリクを出すために自分のローカルの変更をブランチに押し込む
-git push brainch01
+git push origin brainch01
+（今は git push のみでOK）
 
-# mainから持ってくる時
+# GitHub の最新をローカルに取り込みたいとき
 # 1. まず、手元のPCのブランチを「main」に切り替えます
-git checkout main
+git switch main
 
 # 2. GitHub（origin）から最新のmainを引っ張ってきます
-git pull origin main
 
+git pull
+
+# branch01の完成品をmainに反映したいとき
+git checkout main
+git merge branch01
+git push origin main
+git checkout branch01
