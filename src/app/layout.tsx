@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
+import { AuthSessionProvider } from "@/components/AuthSessionProvider";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -20,8 +21,10 @@ export default function RootLayout({
   return (
     <html lang="ja">
       <body>
-        <SiteHeader />
-        {children}
+        <AuthSessionProvider>
+          <SiteHeader />
+          {children}
+        </AuthSessionProvider>
       </body>
     </html>
   );

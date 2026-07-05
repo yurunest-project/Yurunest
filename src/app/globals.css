@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@source "../";
+
 @theme {
   --color-sage: #6e8b74;
   --color-sage-light: #8aa590;

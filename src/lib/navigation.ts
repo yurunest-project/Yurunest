@@ -1,7 +1,7 @@
 export const navItems = [
   { href: "/", label: "Home" },
   { href: "/about", label: "サービスについて" },
-  { href: "/book", label: "予約する" },
+  { href: "/tickets/buy", label: "チケット購入" },
   { href: "/recruit", label: "採用情報" },
 ] as const;
 

@@ -1,0 +1,163 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  CUSTOMER
+  ADMIN
+}
+
+enum TicketStatus {
+  unused
+  reserved
+  consumed
+  refunded
+}
+
+enum ReservationStatus {
+  pending
+  accepted
+  declined
+  cancelled
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  passwordHash  String
+  emailVerified DateTime?
+  nickname      String    @default("")
+  role          UserRole  @default(CUSTOMER)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  tickets                 Ticket[]
+  reservations            Reservation[]
+  emailVerificationTokens EmailVerificationToken[]
+  passwordResetTokens     PasswordResetToken[]
+}
+
+model EmailVerificationToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Employee {
+  id           String    @id @default(cuid())
+  name         String
+  email        String    @unique
+  passwordHash String?
+  birthDate    DateTime? @db.Date
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  requestedReservations Reservation[]        @relation("RequestedEmployee")
+  assignedReservations  Reservation[]        @relation("AssignedEmployee")
+  inviteTokens          EmployeeInviteToken[]
+  declines              ReservationDecline[]
+}
+
+model EmployeeInviteToken {
+  id         String    @id @default(cuid())
+  employeeId String
+  token      String    @unique
+  expiresAt  DateTime
+  usedAt     DateTime?
+  createdAt  DateTime  @default(now())
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@index([employeeId])
+}
+
+model Ticket {
+  id                    String       @id @default(cuid())
+  userId                String
+  status                TicketStatus @default(unused)
+  stripePaymentIntentId String?
+  createdAt             DateTime     @default(now())
+  updatedAt             DateTime     @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservation Reservation?
+
+  @@index([userId, status])
+  @@index([stripePaymentIntentId])
+}
+
+model Reservation {
+  id                  String            @id @default(cuid())
+  userId              String
+  ticketId            String?           @unique
+  desiredDate         DateTime          @db.Date
+  requestedEmployeeId String?
+  assignedEmployeeId  String?
+  status              ReservationStatus @default(pending)
+  dailyRoomUrl        String?
+  dailyRoomName       String?
+  nickname            String
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticket            Ticket?              @relation(fields: [ticketId], references: [id])
+  requestedEmployee Employee?            @relation("RequestedEmployee", fields: [requestedEmployeeId], references: [id])
+  assignedEmployee  Employee?            @relation("AssignedEmployee", fields: [assignedEmployeeId], references: [id])
+  declines          ReservationDecline[]
+
+  @@index([userId])
+  @@index([assignedEmployeeId, status])
+  @@index([desiredDate])
+}
+
+model ReservationDecline {
+  id            String   @id @default(cuid())
+  reservationId String
+  employeeId    String
+  createdAt     DateTime @default(now())
+
+  reservation Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+  employee    Employee    @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([reservationId, employeeId])
+}
+
+model LoginAttempt {
+  id        String   @id @default(cuid())
+  email     String
+  ipAddress String?
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([email, createdAt])
+}
+
+model ProcessedStripeEvent {
+  id        String   @id
+  createdAt DateTime @default(now())
+}

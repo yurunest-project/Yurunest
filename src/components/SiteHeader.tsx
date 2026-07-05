@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { signOut, useSession } from "next-auth/react";
 import { useEffect, useId, useState } from "react";
 import { navItems } from "@/lib/navigation";
 import { SiteLogo } from "./SiteLogo";
@@ -9,6 +10,7 @@ export function SiteHeader() {
   const [open, setOpen] = useState(false);
   const pathname = usePathname();
   const drawerId = useId();
+  const { data: session } = useSession();
 
   useEffect(() => {
     setOpen(false);
@@ -130,6 +132,14 @@ export function SiteHeader() {
             </div>
 
             <ul className="flex flex-col px-3 py-4">
+              {session?.user && (
+                <li className="mb-2 border-b border-sage/10 px-3 pb-3">
+                  <p className="text-sm text-forest-muted">ログイン中</p>
+                  <p className="text-base font-medium text-forest">
+                    {session.user.nickname || session.user.email}
+                  </p>
+                </li>
+              )}
               {navItems.map(({ href, label }) => (
                 <li key={href}>
                   <a
@@ -143,6 +153,34 @@ export function SiteHeader() {
                   </a>
                 </li>
               ))}
+              <li className="mt-2 border-t border-sage/10 pt-2">
+                {session?.user ? (
+                  <button
+                    type="button"
+                    onClick={() => signOut({ callbackUrl: "/" })}
+                    className="block w-full rounded-lg px-3 py-3.5 text-left text-base text-forest transition-colors hover:bg-sage/10"
+                  >
+                    ログアウト
+                  </button>
+                ) : (
+                  <>
+                    <a
+                      href="/login"
+                      className="block rounded-lg px-3 py-3.5 text-base text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      ログイン
+                    </a>
+                    <a
+                      href="/register"
+                      className="block rounded-lg px-3 py-3.5 text-base text-sage-dark transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      新規登録
+                    </a>
+                  </>
+                )}
+              </li>
             </ul>
           </nav>
         </div>
