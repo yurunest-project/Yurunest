@@ -8,17 +8,6 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
-  webpack: (config, { dev }) => {
-    if (dev) {
-      config.watchOptions = {
-        ...config.watchOptions,
-        poll: 1000,
-        aggregateTimeout: 300,
-        ignored: ["**/node_modules/**", "**/.git/**"],
-      };
-    }
-    return config;
-  },
 };
 
 export default nextConfig;

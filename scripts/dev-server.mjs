@@ -66,14 +66,18 @@ console.log(`Starting dev server on http://127.0.0.1:${port}`);
 
 const child = spawn(
   "node",
-  [path.join(projectRoot, "node_modules/next/dist/bin/next"), "dev", "--hostname", "127.0.0.1", "--port", port],
+  [
+    path.join(projectRoot, "node_modules/next/dist/bin/next"),
+    "dev",
+    "--turbopack",
+    "--hostname",
+    "127.0.0.1",
+    "--port",
+    port,
+  ],
   {
     cwd: projectRoot,
     stdio: "inherit",
-    env: {
-      ...process.env,
-      WATCHPACK_POLLING: "true",
-    },
   },
 );
 

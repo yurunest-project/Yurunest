@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SectionHeading } from "@/components/SectionHeading";
+import { HomePurchaseCTA } from "@/components/HomePurchaseCTA";
 import { BOOKING_PLANS, HITOMOSHI_URL } from "@/lib/constants";
 import { hitomoshiLinks } from "@/lib/navigation";
 
@@ -24,15 +25,15 @@ const reasons = [
 const steps = [
   {
     step: 1,
-    title: "プランを選び、Stripeで事前決済",
+    title: "会員登録・ログイン",
   },
   {
     step: 2,
-    title: "決済完了メールに通話URLが届く",
+    title: "15分チケットを購入（Stripe決済）",
   },
   {
     step: 3,
-    title: "予約時間になったら、ブラウザから通話スタート",
+    title: "希望日を選んで予約 → スタッフ承諾後に通話URLが届く",
   },
 ] as const;
 
@@ -124,29 +125,11 @@ function PricingTable() {
   );
 }
 
-function ReserveButton({
-  className = "",
-  compact = false,
-}: {
-  className?: string;
-  compact?: boolean;
-}) {
+function PurchaseCTASection({ compact = false }: { compact?: boolean }) {
   return (
-    <Link
-      href="/book"
-      className={`group block w-full rounded-xl bg-sage-dark text-center font-bold text-white shadow-[0_6px_24px_rgba(42,52,45,0.18)] ring-2 ring-sage/40 transition-all hover:bg-[#4a6350] hover:shadow-[0_8px_28px_rgba(42,52,45,0.24)] hover:ring-sage/60 active:scale-[0.98] focus-visible:outline-offset-4 ${
-        compact
-          ? "px-4 py-3.5 text-base"
-          : "px-6 py-6 text-lg sm:text-xl"
-      } ${className}`}
-    >
-      <span className="block leading-snug">今夜の安心を予約する</span>
-      {!compact && (
-        <span className="mt-1 block text-sm font-medium text-white/85 sm:text-base">
-          全額返金保証付き · 15分500円〜
-        </span>
-      )}
-    </Link>
+    <div className={compact ? "" : ""}>
+      <HomePurchaseCTA compact={compact} />
+    </div>
   );
 }
 
@@ -288,7 +271,7 @@ export default function HomePage() {
             <br />
             まずは予約から、ゆっくり始められます。
           </p>
-          <ReserveButton />
+          <PurchaseCTASection />
         </section>
 
         <nav
@@ -336,7 +319,7 @@ export default function HomePage() {
         aria-label="予約ボタン"
       >
         <div className="mx-auto max-w-lg">
-          <ReserveButton compact />
+          <PurchaseCTASection compact />
         </div>
       </div>
     </div>
