@@ -90,5 +90,9 @@ export function getPlanLabel(plan: PlanDurationKey) {
 }
 
 export function getSiteUrl() {
-  return process.env.NEXT_PUBLIC_SITE_URL ?? "http://127.0.0.1:3000";
+  return (
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    process.env.NEXT_PUBLIC_APP_URL ??
+    "http://127.0.0.1:3000"
+  );
 }

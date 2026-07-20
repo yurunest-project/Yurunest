@@ -140,6 +140,17 @@ export function SiteHeader() {
                   </p>
                 </li>
               )}
+              {session?.user?.role === "ADMIN" && (
+                <li>
+                  <a
+                    href="/admin/reservations"
+                    className="block rounded-lg px-3 py-3.5 text-base text-forest transition-colors hover:bg-sage/10 hover:text-sage-dark focus-visible:outline-offset-2"
+                    onClick={close}
+                  >
+                    予約管理（管理者）
+                  </a>
+                </li>
+              )}
               {navItems.map(({ href, label }) => (
                 <li key={href}>
                   <a

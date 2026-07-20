@@ -1,6 +1,5 @@
 import NextAuth, { CredentialsSignin } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import type { UserRole } from "@prisma/client";
 import authConfig from "@/auth.config";
 import { verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
@@ -64,22 +63,4 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.role = user.role;
-        token.nickname = user.nickname;
-      }
-      return token;
-    },
-    session({ session, token }) {
-      if (session.user) {
-        session.user.id = String(token.id ?? "");
-        session.user.role = token.role as UserRole;
-        session.user.nickname = String(token.nickname ?? "");
-      }
-      return session;
-    },
-  },
 });
