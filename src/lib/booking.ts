@@ -81,6 +81,7 @@ export async function createCheckoutSession(input: {
       },
     ],
     metadata: {
+      purpose: "booking",
       plan: input.plan,
       nickname,
     },
