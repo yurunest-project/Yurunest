@@ -1,4 +1,3 @@
-import { fulfillBookingFromCheckoutSession } from "@/lib/booking";
 import { fulfillTicketPurchaseFromCheckoutSession } from "@/lib/tickets";
 import { getStripe, getStripeWebhookSecret } from "@/lib/stripe";
 import { prisma } from "@/lib/prisma";
@@ -48,14 +47,12 @@ export async function POST(request: Request) {
     }
 
     try {
-      const purpose = session.metadata?.purpose ?? "booking";
-      let result: unknown;
-
-      if (purpose === "ticket_purchase") {
-        result = await fulfillTicketPurchaseFromCheckoutSession(session);
-      } else {
-        result = await fulfillBookingFromCheckoutSession(session);
+      const purpose = session.metadata?.purpose;
+      if (purpose !== "ticket_purchase") {
+        throw new Error(`Unsupported checkout purpose: ${purpose ?? "missing"}`);
       }
+
+      const result = await fulfillTicketPurchaseFromCheckoutSession(session);
 
       await prisma.processedStripeEvent.create({
         data: { id: event.id },

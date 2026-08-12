@@ -8,6 +8,20 @@ const nextConfig: NextConfig = {
   turbopack: {
     root: projectRoot,
   },
+  async redirects() {
+    return [
+      {
+        source: "/book",
+        destination: "/tickets/buy",
+        permanent: true,
+      },
+      {
+        source: "/book/success",
+        destination: "/reservations",
+        permanent: true,
+      },
+    ];
+  },
 };
 
 export default nextConfig;

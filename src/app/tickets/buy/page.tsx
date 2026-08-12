@@ -4,8 +4,7 @@ import { Suspense } from "react";
 import { auth } from "@/auth";
 import { AuthShell } from "@/components/AuthShell";
 import { TicketPurchaseForm } from "@/components/TicketPurchaseForm";
-import { countUnusedTickets } from "@/lib/tickets";
-import { TICKET_UNIT_PRICE_YEN } from "@/types/ticket";
+import { getUnusedTicketSummary } from "@/lib/tickets";
 
 export const metadata: Metadata = {
   title: "チケット購入 | ゆるネスト",
@@ -30,9 +29,7 @@ export default async function TicketsBuyPage() {
     );
   }
 
-  const unusedCount = await countUnusedTickets(session.user.id);
-  const unitPrice =
-    Number(process.env.TICKET_UNIT_PRICE_JPY) || TICKET_UNIT_PRICE_YEN;
+  const ticketSummary = await getUnusedTicketSummary(session.user.id);
 
   return (
     <AuthShell
@@ -40,12 +37,14 @@ export default async function TicketsBuyPage() {
       subtitle={`${session.user.nickname || session.user.email} さん`}
     >
       <p className="mb-2 text-base leading-relaxed text-forest-muted">
-        15分チケットを Stripe で購入できます。購入後、希望日を選んで予約してください。
+        利用したい時間のチケットを Stripe で購入できます。購入後、日時を選んで予約してください。
       </p>
       <p className="mb-6 rounded-xl border border-sage/20 bg-sage/5 px-4 py-3 text-sm text-forest">
-        未使用チケット:{" "}
-        <span className="font-bold">{unusedCount}枚</span>
-        {unusedCount > 0 && (
+        利用可能:{" "}
+        <span className="font-bold">
+          {ticketSummary.count}枚（合計{ticketSummary.totalMinutes}分）
+        </span>
+        {ticketSummary.count > 0 && (
           <>
             {" · "}
             <Link href="/reservations/new" className="text-sage-dark underline">
@@ -56,7 +55,7 @@ export default async function TicketsBuyPage() {
       </p>
 
       <Suspense fallback={<p className="text-base text-forest-muted">読み込み中...</p>}>
-        <TicketPurchaseForm unitPrice={unitPrice} />
+        <TicketPurchaseForm />
       </Suspense>
 
       <p className="mt-6 text-center text-sm">

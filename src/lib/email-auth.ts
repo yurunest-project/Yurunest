@@ -28,8 +28,19 @@ async function sendAuthEmail(input: {
   });
 
   if (result.error) {
+    console.error("[auth-email:resend-error]", {
+      to: input.to,
+      subject: input.subject,
+      error: result.error,
+    });
     throw new Error(result.error.message);
   }
+
+  console.info("[auth-email:sent]", {
+    to: input.to,
+    subject: input.subject,
+    id: result.data?.id,
+  });
 }
 
 export async function sendVerificationEmail(input: {
@@ -39,6 +50,10 @@ export async function sendVerificationEmail(input: {
 }) {
   const verifyUrl = `${getAppUrl()}/api/auth/verify-email?token=${encodeURIComponent(input.token)}`;
   const subject = "【ゆるネスト】メールアドレスの確認";
+
+  if (process.env.NODE_ENV === "development") {
+    console.info("[auth-email:dev-verify-link]", verifyUrl);
+  }
 
   const text = [
     `${input.nickname} さん`,

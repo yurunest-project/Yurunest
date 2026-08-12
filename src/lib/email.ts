@@ -8,6 +8,30 @@ type BookingEmailInput = {
   siteUrl: string;
 };
 
+async function sendEmail(input: {
+  to: string;
+  subject: string;
+  text: string;
+  html?: string;
+}) {
+  const from = process.env.BOOKING_EMAIL_FROM;
+  if (!process.env.RESEND_API_KEY || !from) {
+    console.info("[email:dev-fallback]", input);
+    return { id: "dev-fallback", mode: "log" as const };
+  }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
+  const result = await resend.emails.send({
+    from,
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html: input.html ?? `<p>${input.text.replace(/\n/g, "<br />")}</p>`,
+  });
+  if (result.error) throw new Error(result.error.message);
+  return { id: result.data?.id ?? "sent", mode: "resend" as const };
+}
+
 function buildBookingEmail({
   nickname,
   planLabel,
@@ -30,7 +54,7 @@ function buildBookingEmail({
     "※ このURLはメールでもう一度ご確認ください。",
     "※ ブラウザ（Chrome / Safari 等）からそのまま通話できます。",
     "",
-    `予約内容の確認：${siteUrl}/book/success`,
+    `予約内容の確認：${siteUrl}/reservations`,
     "",
     "ご不明点は hitomoshi.official@gmail.com までご連絡ください。",
     "",
@@ -54,25 +78,89 @@ function buildBookingEmail({
 
 export async function sendBookingConfirmationEmail(input: BookingEmailInput) {
   const { subject, text, html } = buildBookingEmail(input);
-  const from = process.env.BOOKING_EMAIL_FROM;
+  return sendEmail({ to: input.to, subject, text, html });
+}
 
-  if (!process.env.RESEND_API_KEY || !from) {
-    console.info("[booking-email:dev-fallback]", { to: input.to, subject, text });
-    return { id: "dev-fallback", mode: "log" as const };
-  }
-
-  const resend = new Resend(process.env.RESEND_API_KEY);
-  const result = await resend.emails.send({
-    from,
+export async function sendReservationStatusEmail(input: {
+  to: string;
+  nickname: string;
+  status: "created" | "declined" | "cancelled";
+  siteUrl: string;
+}) {
+  const messages = {
+    created: "ご予約を受け付けました。スタッフの承諾をお待ちください。",
+    declined: "ご予約はお受けできませんでした。チケットは返還されています。",
+    cancelled: "ご予約をキャンセルしました。チケットは返還されています。",
+  };
+  const text = [
+    `${input.nickname} さん`,
+    "",
+    messages[input.status],
+    "",
+    `予約一覧：${input.siteUrl}/reservations`,
+    "",
+    "ゆるネスト",
+  ].join("\n");
+  return sendEmail({
     to: input.to,
-    subject,
+    subject: `【ゆるネスト】${messages[input.status]}`,
     text,
-    html,
   });
+}
 
-  if (result.error) {
-    throw new Error(result.error.message);
-  }
+export async function sendTicketPurchaseEmail(input: {
+  to: string;
+  quantity: number;
+  ticketLabel: string;
+  siteUrl: string;
+}) {
+  return sendEmail({
+    to: input.to,
+    subject: "【ゆるネスト】チケット購入完了のお知らせ",
+    text: [
+      "チケットの購入が完了しました。",
+      `購入内容：${input.ticketLabel} × ${input.quantity}枚`,
+      "",
+      `予約する：${input.siteUrl}/reservations/new`,
+      "",
+      "ゆるネスト",
+    ].join("\n"),
+  });
+}
 
-  return { id: result.data?.id ?? "sent", mode: "resend" as const };
+export async function sendRefundCompletedEmail(input: {
+  to: string;
+  reason: string;
+  siteUrl: string;
+}) {
+  return sendEmail({
+    to: input.to,
+    subject: "【ゆるネスト】返金完了のお知らせ",
+    text: [
+      "ご購入代金の全額返金処理が完了しました。",
+      `理由：${input.reason}`,
+      "",
+      "カード会社への反映には数日かかる場合があります。",
+      `予約一覧：${input.siteUrl}/reservations`,
+      "",
+      "ゆるネスト",
+    ].join("\n"),
+  });
+}
+
+export async function sendAdminReservationNotification(input: {
+  reservationId: string;
+  siteUrl: string;
+}) {
+  const adminEmail = process.env.ADMIN_EMAIL?.trim();
+  if (!adminEmail) return null;
+  return sendEmail({
+    to: adminEmail,
+    subject: "【ゆるネスト】新しい予約を受け付けました",
+    text: [
+      "新しい予約を受け付けました。",
+      `${input.siteUrl}/admin/reservations`,
+      `予約ID: ${input.reservationId}`,
+    ].join("\n"),
+  });
 }

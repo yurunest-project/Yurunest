@@ -1,8 +1,24 @@
 import { createDailyRoom } from "@/lib/daily";
-import { sendBookingConfirmationEmail } from "@/lib/email";
+import {
+  sendAdminReservationNotification,
+  sendBookingConfirmationEmail,
+  sendReservationStatusEmail,
+} from "@/lib/email";
 import { getSiteUrl } from "@/lib/constants";
+import {
+  releaseAvailabilitySlots,
+  reserveAvailabilitySlots,
+} from "@/lib/availability";
+import {
+  isSlotAligned,
+  parseJstDateTime,
+  toJstDateString,
+} from "@/lib/datetime";
 import { prisma } from "@/lib/prisma";
-import { ticketsRequiredForMinutes } from "@/types/ticket";
+import {
+  allocateTicketsForReservation,
+  revertTicketAllocation,
+} from "@/lib/ticket-allocation";
 
 function formatDurationLabel(minutes: number) {
   if (minutes >= 60 && minutes % 60 === 0) {
@@ -14,63 +30,85 @@ function formatDurationLabel(minutes: number) {
 export async function createReservation(input: {
   userId: string;
   nickname: string;
-  desiredDate: string;
+  startAt: string;
   durationMinutes: number;
-  requestedEmployeeId?: string | null;
+  employeeId: string;
 }) {
-  const required = ticketsRequiredForMinutes(input.durationMinutes);
-  if (required < 1) {
+  if (input.durationMinutes < 15 || input.durationMinutes % 15 !== 0) {
     throw new Error("Invalid duration");
   }
 
-  const desiredDate = new Date(`${input.desiredDate}T00:00:00.000Z`);
-  if (Number.isNaN(desiredDate.getTime())) {
-    throw new Error("Invalid date");
+  const startAt = new Date(input.startAt);
+  if (
+    Number.isNaN(startAt.getTime()) ||
+    !isSlotAligned(startAt) ||
+    startAt <= new Date()
+  ) {
+    throw new Error("予約日時が正しくありません");
+  }
+  const desiredDate = parseJstDateTime(toJstDateString(startAt), "00:00");
+
+  const employee = await prisma.employee.findFirst({
+    where: { id: input.employeeId, isActive: true },
+  });
+  if (!employee) {
+    throw new Error("選択したスタッフは現在予約できません");
   }
 
-  if (input.requestedEmployeeId) {
-    const employee = await prisma.employee.findFirst({
-      where: { id: input.requestedEmployeeId, isActive: true },
-    });
-    if (!employee) {
-      throw new Error("Requested employee not found");
-    }
-  }
-
-  return prisma.$transaction(async (tx) => {
-    const unused = await tx.ticket.findMany({
-      where: { userId: input.userId, status: "unused" },
-      orderBy: { createdAt: "asc" },
-      take: required,
-    });
-
-    if (unused.length < required) {
-      throw new Error(
-        `チケットが不足しています（必要: ${required}枚 / 所持: ${unused.length}枚）`,
-      );
-    }
-
+  const reservation = await prisma.$transaction(async (tx) => {
     const reservation = await tx.reservation.create({
       data: {
         userId: input.userId,
         nickname: input.nickname.trim() || "ゲスト",
         desiredDate,
+        startAt,
         durationMinutes: input.durationMinutes,
-        requestedEmployeeId: input.requestedEmployeeId || null,
+        requestedEmployeeId: input.employeeId,
         status: "pending",
       },
     });
 
-    await tx.ticket.updateMany({
-      where: { id: { in: unused.map((t) => t.id) } },
-      data: {
-        status: "reserved",
-        reservationId: reservation.id,
-      },
+    await reserveAvailabilitySlots(tx, {
+      employeeId: input.employeeId,
+      startAt,
+      durationMinutes: input.durationMinutes,
+      reservationId: reservation.id,
+    });
+
+    await allocateTicketsForReservation(tx, {
+      userId: input.userId,
+      reservationId: reservation.id,
+      requiredMinutes: input.durationMinutes,
     });
 
     return reservation;
   });
+
+  const user = await prisma.user.findUnique({
+    where: { id: input.userId },
+    select: { email: true },
+  });
+  if (user) {
+    try {
+      await sendReservationStatusEmail({
+        to: user.email,
+        nickname: reservation.nickname,
+        status: "created",
+        siteUrl: getSiteUrl(),
+      });
+    } catch (error) {
+      console.error("[reservation-created-email]", error);
+    }
+  }
+  try {
+    await sendAdminReservationNotification({
+      reservationId: reservation.id,
+      siteUrl: getSiteUrl(),
+    });
+  } catch (error) {
+    console.error("[admin-reservation-email]", error);
+  }
+  return reservation;
 }
 
 export async function acceptReservation(input: {
@@ -98,6 +136,13 @@ export async function acceptReservation(input: {
     reservation.requestedEmployeeId ??
     null;
 
+  if (
+    reservation.requestedEmployeeId &&
+    assignedEmployeeId !== reservation.requestedEmployeeId
+  ) {
+    throw new Error("予約したスタッフのみ承諾できます");
+  }
+
   if (assignedEmployeeId) {
     const employee = await prisma.employee.findFirst({
       where: { id: assignedEmployeeId, isActive: true },
@@ -109,9 +154,11 @@ export async function acceptReservation(input: {
 
   const room = await createDailyRoom({
     durationMinutes: reservation.durationMinutes,
+    startsAt: reservation.startAt ?? undefined,
   });
   const siteUrl = getSiteUrl();
   const planLabel = formatDurationLabel(reservation.durationMinutes);
+  const callUrl = `${siteUrl}/call/${room.name}`;
 
   await prisma.$transaction(async (tx) => {
     await tx.reservation.update({
@@ -119,7 +166,7 @@ export async function acceptReservation(input: {
       data: {
         status: "accepted",
         assignedEmployeeId,
-        dailyRoomUrl: room.url,
+        dailyRoomUrl: callUrl,
         dailyRoomName: room.name,
       },
     });
@@ -134,13 +181,13 @@ export async function acceptReservation(input: {
     to: reservation.user.email,
     nickname: reservation.nickname,
     planLabel,
-    callUrl: room.url,
+    callUrl,
     siteUrl,
   });
 
   return {
     reservationId: reservation.id,
-    callUrl: room.url,
+    callUrl,
     roomName: room.name,
   };
 }
@@ -151,6 +198,7 @@ export async function declineReservation(input: {
 }) {
   const reservation = await prisma.reservation.findUnique({
     where: { id: input.reservationId },
+    include: { user: true },
   });
 
   if (!reservation) {
@@ -160,19 +208,14 @@ export async function declineReservation(input: {
     throw new Error("Reservation is not pending");
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     await tx.reservation.update({
       where: { id: reservation.id },
       data: { status: "declined" },
     });
 
-    await tx.ticket.updateMany({
-      where: { reservationId: reservation.id, status: "reserved" },
-      data: {
-        status: "unused",
-        reservationId: null,
-      },
-    });
+    await revertTicketAllocation(tx, reservation.id);
+    await releaseAvailabilitySlots(tx, reservation.id);
 
     if (input.employeeId) {
       await tx.reservationDecline.create({
@@ -185,6 +228,17 @@ export async function declineReservation(input: {
 
     return { reservationId: reservation.id };
   });
+  try {
+    await sendReservationStatusEmail({
+      to: reservation.user.email,
+      nickname: reservation.nickname,
+      status: "declined",
+      siteUrl: getSiteUrl(),
+    });
+  } catch (error) {
+    console.error("[reservation-declined-email]", error);
+  }
+  return result;
 }
 
 export async function cancelReservation(input: {
@@ -193,6 +247,7 @@ export async function cancelReservation(input: {
 }) {
   const reservation = await prisma.reservation.findFirst({
     where: { id: input.reservationId, userId: input.userId },
+    include: { user: true },
   });
 
   if (!reservation) {
@@ -202,20 +257,26 @@ export async function cancelReservation(input: {
     throw new Error("Only pending reservations can be cancelled");
   }
 
-  return prisma.$transaction(async (tx) => {
+  const result = await prisma.$transaction(async (tx) => {
     await tx.reservation.update({
       where: { id: reservation.id },
       data: { status: "cancelled" },
     });
 
-    await tx.ticket.updateMany({
-      where: { reservationId: reservation.id, status: "reserved" },
-      data: {
-        status: "unused",
-        reservationId: null,
-      },
-    });
+    await revertTicketAllocation(tx, reservation.id);
+    await releaseAvailabilitySlots(tx, reservation.id);
 
     return { reservationId: reservation.id };
   });
+  try {
+    await sendReservationStatusEmail({
+      to: reservation.user.email,
+      nickname: reservation.nickname,
+      status: "cancelled",
+      siteUrl: getSiteUrl(),
+    });
+  } catch (error) {
+    console.error("[reservation-cancelled-email]", error);
+  }
+  return result;
 }

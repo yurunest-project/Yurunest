@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 import { AuthSessionProvider } from "@/components/AuthSessionProvider";
 import "./globals.css";
 
@@ -24,6 +25,7 @@ export default function RootLayout({
         <AuthSessionProvider>
           <SiteHeader />
           {children}
+          <SiteFooter />
         </AuthSessionProvider>
       </body>
     </html>

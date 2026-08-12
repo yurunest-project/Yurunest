@@ -16,6 +16,7 @@ type DailyRoomResponse = {
 type CreateRoomInput = {
   durationMinutes: number;
   roomName?: string;
+  startsAt?: Date;
 };
 
 function getApiKey() {
@@ -29,13 +30,14 @@ function getApiKey() {
 export async function createDailyRoom({
   durationMinutes,
   roomName,
+  startsAt,
 }: CreateRoomInput): Promise<DailyRoomResponse> {
   const name =
     roomName ??
     `yurunest-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
   const exp =
-    Math.floor(Date.now() / 1000) +
+    Math.floor((startsAt?.getTime() ?? Date.now()) / 1000) +
     (durationMinutes + ROOM_EXPIRY_BUFFER_MINUTES) * 60;
 
   const response = await fetch(`${DAILY_API_URL}/rooms`, {

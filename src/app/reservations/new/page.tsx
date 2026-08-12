@@ -3,7 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { ReservationForm } from "@/components/ReservationForm";
-import { countUnusedTickets } from "@/lib/tickets";
+import { getUnusedTicketSummary } from "@/lib/tickets";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -16,8 +16,8 @@ export default async function NewReservationPage() {
     redirect("/login?callbackUrl=/reservations/new");
   }
 
-  const [unusedTicketCount, employees] = await Promise.all([
-    countUnusedTickets(session.user.id),
+  const [ticketSummary, employees] = await Promise.all([
+    getUnusedTicketSummary(session.user.id),
     prisma.employee.findMany({
       where: { isActive: true },
       orderBy: { name: "asc" },
@@ -33,13 +33,14 @@ export default async function NewReservationPage() {
         </p>
         <h1 className="mb-3 text-2xl font-bold text-forest">希望日を予約</h1>
         <p className="mb-8 text-base leading-relaxed text-forest-muted">
-          未使用チケットを使って希望日を申し込みます。スタッフ承諾後に通話URLをお送りします。
+          時間別チケットを使って日時を予約します。利用するチケットは自動で選ばれ、余った時間は別の時間別チケットとして返還されます。
         </p>
 
         <div className="rounded-2xl border border-sage/20 bg-white p-5 shadow-[0_4px_20px_rgba(110,139,116,0.08)] sm:p-6">
           <ReservationForm
             employees={employees}
-            unusedTicketCount={unusedTicketCount}
+            unusedTicketCount={ticketSummary.count}
+            unusedTicketMinutes={ticketSummary.totalMinutes}
             defaultNickname={session.user.nickname || ""}
           />
         </div>

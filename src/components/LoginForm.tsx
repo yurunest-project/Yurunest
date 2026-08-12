@@ -1,27 +1,40 @@
 "use client";
 
 import { AuthShell, Field, authInputClassName } from "@/components/AuthShell";
+import { ResendVerificationForm } from "@/components/ResendVerificationForm";
 import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { FormEvent, useState } from "react";
 
-export function LoginForm() {
+export function LoginForm({
+  provider = "customer",
+  title = "ログイン",
+  subtitle = "登録済みのメールアドレスでログインしてください。",
+}: {
+  provider?: "customer" | "employee";
+  title?: string;
+  subtitle?: string;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl =
+    searchParams.get("callbackUrl") ??
+    (provider === "employee" ? "/employee/reservations" : "/dashboard");
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [showResend, setShowResend] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setShowResend(false);
 
-    const result = await signIn("customer", {
+    const result = await signIn(provider, {
       email,
       password,
       redirect: false,
@@ -33,6 +46,7 @@ export function LoginForm() {
         setError("ログイン試行回数が多すぎます。15分後に再度お試しください。");
       } else if (code === "EMAIL_NOT_VERIFIED" || result.error === "EMAIL_NOT_VERIFIED") {
         setError("メールアドレスの確認が完了していません。確認メールをご確認ください。");
+        setShowResend(true);
       } else {
         setError("メールアドレスまたはパスワードが正しくありません。");
       }
@@ -45,7 +59,7 @@ export function LoginForm() {
   }
 
   return (
-    <AuthShell title="ログイン" subtitle="登録済みのメールアドレスでログインしてください。">
+    <AuthShell title={title} subtitle={subtitle}>
       <form onSubmit={handleSubmit} className="space-y-5">
         <Field id="email" label="メールアドレス">
           <input
@@ -76,6 +90,9 @@ export function LoginForm() {
             {error}
           </p>
         )}
+        {showResend && (
+          <ResendVerificationForm defaultEmail={email} compact />
+        )}
 
         <button
           type="submit"
@@ -85,17 +102,21 @@ export function LoginForm() {
           {loading ? "ログイン中..." : "ログイン"}
         </button>
 
-        <p className="text-center text-sm text-forest-muted">
-          <Link href="/forgot-password" className="text-sage-dark hover:underline">
-            パスワードをお忘れですか？
-          </Link>
-        </p>
-        <p className="text-center text-sm text-forest-muted">
-          アカウントをお持ちでない方は{" "}
-          <Link href="/register" className="text-sage-dark hover:underline">
-            新規登録
-          </Link>
-        </p>
+        {provider === "customer" && (
+          <>
+            <p className="text-center text-sm text-forest-muted">
+              <Link href="/forgot-password" className="text-sage-dark hover:underline">
+                パスワードをお忘れですか？
+              </Link>
+            </p>
+            <p className="text-center text-sm text-forest-muted">
+              アカウントをお持ちでない方は{" "}
+              <Link href="/register" className="text-sage-dark hover:underline">
+                新規登録
+              </Link>
+            </p>
+          </>
+        )}
       </form>
     </AuthShell>
   );

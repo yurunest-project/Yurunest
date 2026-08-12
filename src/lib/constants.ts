@@ -1,3 +1,4 @@
+/** 運営母体「ひともし」のサイト。ゆるネスト本番ドメインとは別。 */
 export const HITOMOSHI_URL = "https://hitomoshi-one.vercel.app";
 
 export const BOOKING_FORM_URL =
@@ -13,6 +14,7 @@ export const PLAN_DURATION_MINUTES = {
 } as const;
 
 export type PlanDurationKey = keyof typeof PLAN_DURATION_MINUTES;
+export type TicketKindKey = "min15" | "min30" | "hour1" | "hour3" | "sleep5";
 
 /** ルーム有効期限 = 通話時間 + 余裕（分） */
 export const ROOM_EXPIRY_BUFFER_MINUTES = 15;
@@ -56,8 +58,8 @@ export const BOOKING_PLANS = [
   },
   {
     id: "sleep" as const,
-    label: "寝落ちパック",
-    subtitle: "5時間以上",
+    label: "5時間",
+    subtitle: "寝落ちパック",
     price: 6500,
     unitPrice: "約21円/分",
     note: "長時間のご利用に",
@@ -66,8 +68,46 @@ export const BOOKING_PLANS = [
   },
 ] as const;
 
+const PLAN_TICKET_KIND: Record<PlanDurationKey, TicketKindKey> = {
+  "15min": "min15",
+  "30min": "min30",
+  "1hour": "hour1",
+  "3hour": "hour3",
+  sleep: "sleep5",
+};
+
+export const TIME_TICKETS = BOOKING_PLANS.map((plan) => ({
+  kind: PLAN_TICKET_KIND[plan.id],
+  planId: plan.id,
+  label: `${plan.label}チケット`,
+  shortLabel: plan.label,
+  subtitle: "subtitle" in plan ? plan.subtitle : undefined,
+  minutes: PLAN_DURATION_MINUTES[plan.id],
+  priceYen: plan.price,
+})) as unknown as readonly {
+  kind: TicketKindKey;
+  planId: PlanDurationKey;
+  label: string;
+  shortLabel: string;
+  subtitle?: string;
+  minutes: number;
+  priceYen: number;
+}[];
+
 export function getPlanById(id: string) {
   return BOOKING_PLANS.find((plan) => plan.id === id);
+}
+
+export function getTimeTicketByKind(kind: string) {
+  return TIME_TICKETS.find((ticket) => ticket.kind === kind);
+}
+
+export function getTicketKindForMinutes(minutes: number) {
+  return TIME_TICKETS.find((ticket) => ticket.minutes === minutes)?.kind;
+}
+
+export function getTimeTicketLabel(kind: string) {
+  return getTimeTicketByKind(kind)?.label ?? kind;
 }
 
 export function getDailyRoomUrl(roomName: string) {

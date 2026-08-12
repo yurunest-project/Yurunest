@@ -15,7 +15,10 @@
     "db:studio": "dotenv -e .env.local -- prisma studio",
     "stripe:listen": "stripe listen --forward-to localhost:3000/api/stripe/webhook",
     "env:check": "node scripts/check-env.mjs",
-    "smoke:booking": "dotenv -e .env.local -- node scripts/smoke-booking-flow.mjs"
+    "email:probe": "node scripts/probe-email.mjs",
+    "deploy:checklist": "node scripts/deploy-checklist.mjs",
+    "smoke:booking": "dotenv -e .env.local -- tsx scripts/smoke-booking-flow.mjs",
+    "test:tickets": "tsx scripts/test-ticket-allocation.ts"
   },
   "dependencies": {
     "@daily-co/daily-js": "^0.91.0",
@@ -40,6 +43,7 @@
     "eslint-config-next": "^15.3.3",
     "prisma": "^6.19.3",
     "tailwindcss": "^4.1.8",
+    "tsx": "^4.23.1",
     "typescript": "^5.8.3"
   }
 }

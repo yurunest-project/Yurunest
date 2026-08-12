@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <Suspense fallback={<p className="p-10 text-center">読み込み中...</p>}>
-      <LoginForm />
+      <LoginForm subtitle="利用者・管理者・スタッフ共通のログイン画面です。" />
     </Suspense>
   );
 }

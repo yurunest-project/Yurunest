@@ -4,11 +4,11 @@ import { PLAN_DURATION_MINUTES, type PlanDurationKey } from "@/lib/constants";
 import { NextResponse } from "next/server";
 
 type Body = {
-  desiredDate?: string;
   durationMinutes?: number;
   plan?: string;
   nickname?: string;
-  requestedEmployeeId?: string | null;
+  startAt?: string;
+  employeeId?: string;
 };
 
 function resolveDurationMinutes(body: Body): number | null {
@@ -34,13 +34,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  const desiredDate = body.desiredDate?.trim() ?? "";
+  const startAt = body.startAt?.trim() ?? "";
+  const employeeId = body.employeeId?.trim() ?? "";
   const durationMinutes = resolveDurationMinutes(body);
   const nickname =
     body.nickname?.trim() || session.user.nickname || "ゲスト";
 
-  if (!desiredDate) {
-    return NextResponse.json({ error: "希望日を入力してください" }, { status: 400 });
+  if (!startAt || !employeeId) {
+    return NextResponse.json({ error: "予約日時とスタッフを選択してください" }, { status: 400 });
   }
   if (!durationMinutes || durationMinutes < 15) {
     return NextResponse.json({ error: "プランを選択してください" }, { status: 400 });
@@ -50,9 +51,9 @@ export async function POST(request: Request) {
     const reservation = await createReservation({
       userId: session.user.id,
       nickname,
-      desiredDate,
+      startAt,
       durationMinutes,
-      requestedEmployeeId: body.requestedEmployeeId || null,
+      employeeId,
     });
 
     return NextResponse.json({ id: reservation.id });

@@ -28,7 +28,10 @@ export default function AboutPage() {
             夜眠れなくて寂しい「ひなユーザーさん」と、お家から一歩を踏み出したい「ひな社員（スタッフ）」を優しく繋ぐ、ブラウザ完結の1対1通話サービスです。
           </p>
           <p>
-            Discord などの追加アプリは不要。予約・決済後に届くURLから、そのままブラウザで通話を始められます。
+            Discord などの追加アプリは不要。チケット購入・予約後に届くURLから、そのままブラウザで通話を始められます。
+          </p>
+          <p>
+            チケットは15分・30分・1時間・3時間・寝落ちパックから選べます。予約時間より長いチケットを利用した場合、余った時間は利用できる時間別チケットとして返還されます。
           </p>
         </section>
 
@@ -56,10 +59,10 @@ export default function AboutPage() {
           </p>
           <p className="mt-4">
             <Link
-              href="/book"
+              href="/tickets/buy"
               className="font-medium text-sage-dark underline-offset-4 hover:underline"
             >
-              予約・決済ページへ
+              チケット購入・予約へ
             </Link>
           </p>
         </section>
