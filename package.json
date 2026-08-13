@@ -6,7 +6,7 @@
     "dev": "node scripts/dev-server.mjs",
     "dev:clean": "node scripts/dev-server.mjs --clean",
     "build": "prisma generate && next build",
-    "start": "next start",
+    "start": "next start --hostname 0.0.0.0",
     "lint": "eslint",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
