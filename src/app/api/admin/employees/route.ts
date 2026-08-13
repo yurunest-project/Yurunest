@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { getAppUrl } from "@/lib/app-url";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { createSecureToken, tokenExpiresInHours } from "@/lib/tokens";
@@ -52,7 +53,14 @@ export async function POST(request: Request) {
         expiresAt: tokenExpiresInHours(72),
       },
     });
-    return NextResponse.json({ employee, inviteToken: token }, { status: 201 });
+    return NextResponse.json(
+      {
+        employee,
+        inviteToken: token,
+        inviteUrl: `${getAppUrl()}/employee/invite?token=${encodeURIComponent(token)}`,
+      },
+      { status: 201 },
+    );
   } catch {
     return NextResponse.json({ error: "このメールアドレスは既に登録されています" }, { status: 409 });
   }

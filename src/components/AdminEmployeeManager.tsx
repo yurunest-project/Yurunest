@@ -21,11 +21,21 @@ export function AdminEmployeeManager() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name, email, birthDate: birthDate || undefined }),
       });
-      const data = (await response.json()) as { inviteToken?: string; error?: string };
+      const data = (await response.json()) as {
+        inviteToken?: string;
+        inviteUrl?: string;
+        error?: string;
+      };
       if (!response.ok || !data.inviteToken) {
         throw new Error(data.error ?? "スタッフを登録できませんでした");
       }
-      setInviteUrl(`${window.location.origin}/employee/invite?token=${data.inviteToken}`);
+      const origin =
+        process.env.NEXT_PUBLIC_APP_URL?.replace(/\/+$/, "") ||
+        window.location.origin;
+      setInviteUrl(
+        data.inviteUrl ??
+          `${origin}/employee/invite?token=${encodeURIComponent(data.inviteToken)}`,
+      );
       setName("");
       setEmail("");
       setBirthDate("");
