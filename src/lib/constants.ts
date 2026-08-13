@@ -1,3 +1,5 @@
+import { getAppUrl } from "@/lib/app-url";
+
 /** 運営母体「ひともし」のサイト。ゆるネスト本番ドメインとは別。 */
 export const HITOMOSHI_URL = "https://hitomoshi-one.vercel.app";
 
@@ -130,9 +132,5 @@ export function getPlanLabel(plan: PlanDurationKey) {
 }
 
 export function getSiteUrl() {
-  return (
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://127.0.0.1:3000"
-  );
+  return getAppUrl();
 }

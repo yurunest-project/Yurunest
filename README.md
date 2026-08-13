@@ -2,11 +2,11 @@
 
 ブラウザ完結の通話予約サービス（ゆるネスト）。
 
-## 本番公開（yurunest.com / Railway）
+## 本番公開（www.yurunest.com / Railway）
 
 Vercel ではなく Railway + カスタムドメインで公開する手順は [docs/DEPLOY.md](docs/DEPLOY.md) を参照。
 
-- 本番 URL: `https://yurunest.com`
+- 本番 URL: `https://www.yurunest.com`
 - 環境変数テンプレート: [.env.production.example](.env.production.example)
 - デプロイ設定: [railway.toml](railway.toml)
 

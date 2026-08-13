@@ -1,4 +1,5 @@
 import { auth } from "@/auth";
+import { getAppUrl } from "@/lib/app-url";
 import { createTicketCheckoutSession } from "@/lib/tickets";
 import { getTimeTicketByKind, type TicketKindKey } from "@/lib/constants";
 import { NextResponse } from "next/server";
@@ -40,11 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid ticket" }, { status: 400 });
   }
 
-  const origin =
-    request.headers.get("origin") ??
-    process.env.NEXT_PUBLIC_SITE_URL ??
-    process.env.NEXT_PUBLIC_APP_URL ??
-    "http://127.0.0.1:3000";
+  const origin = request.headers.get("origin") ?? getAppUrl();
 
   try {
     const checkout = await createTicketCheckoutSession({

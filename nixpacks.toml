@@ -1,0 +1,10 @@
+[variables]
+NODE_VERSION = "20"
+NPM_CONFIG_PRODUCTION = "false"
+NPM_CONFIG_OPTIONAL = "true"
+
+[phases.install]
+cmds = [
+  "npm ci --include=optional --include=dev",
+  "npm install --no-save --include=optional @tailwindcss/oxide-linux-x64-gnu@4.3.1 @tailwindcss/oxide-linux-x64-musl@4.3.1 lightningcss-linux-x64-gnu@1.32.0 lightningcss-linux-x64-musl@1.32.0"
+]
