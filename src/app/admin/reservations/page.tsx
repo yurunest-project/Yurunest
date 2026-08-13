@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
 import { AdminReservationActions } from "@/components/AdminReservationActions";
+import { getTimeTicketLabel } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 
 export const metadata: Metadata = {
@@ -32,7 +33,7 @@ export default async function AdminReservationsPage() {
       include: {
         user: { select: { email: true, nickname: true } },
         requestedEmployee: { select: { id: true, name: true } },
-        tickets: { select: { id: true } },
+        tickets: { select: { id: true, kind: true } },
       },
     }),
     prisma.reservation.findMany({
@@ -42,7 +43,7 @@ export default async function AdminReservationsPage() {
       include: {
         user: { select: { email: true, nickname: true } },
         assignedEmployee: { select: { name: true } },
-        tickets: { select: { id: true } },
+        tickets: { select: { id: true, kind: true } },
       },
     }),
     prisma.employee.findMany({
@@ -62,6 +63,34 @@ export default async function AdminReservationsPage() {
         <p className="mb-8 text-base text-forest-muted">
           承諾すると Daily ルームを作成し、お客様へ通話URLをメール送信します。
         </p>
+        <p className="mb-8">
+          <span className="flex flex-wrap gap-2">
+            <Link
+              href="/admin/shifts"
+              className="inline-block rounded-xl border border-sage/25 px-4 py-3 text-sm font-medium text-forest hover:bg-sage/10"
+            >
+              シフト管理
+            </Link>
+            <Link
+              href="/admin/employees"
+              className="inline-block rounded-xl border border-sage/25 px-4 py-3 text-sm font-medium text-forest hover:bg-sage/10"
+            >
+              スタッフ管理
+            </Link>
+            <Link
+              href="/admin/refunds"
+              className="inline-block rounded-xl border border-sage/25 px-4 py-3 text-sm font-medium text-forest hover:bg-sage/10"
+            >
+              返金管理
+            </Link>
+            <Link
+              href="/admin/tickets"
+              className="inline-block rounded-xl border border-sage/25 px-4 py-3 text-sm font-medium text-forest hover:bg-sage/10"
+            >
+              チケット管理
+            </Link>
+          </span>
+        </p>
 
         <section className="mb-10">
           <h2 className="mb-4 text-lg font-bold text-forest">
@@ -79,11 +108,23 @@ export default async function AdminReservationsPage() {
                   className="rounded-2xl border border-sage/20 bg-white p-5"
                 >
                   <p className="text-lg font-bold text-forest">
-                    {reservation.desiredDate.toISOString().slice(0, 10)}
+                    {reservation.startAt
+                      ? new Intl.DateTimeFormat("ja-JP", {
+                          timeZone: "Asia/Tokyo",
+                          year: "numeric",
+                          month: "numeric",
+                          day: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                          hourCycle: "h23",
+                        }).format(reservation.startAt)
+                      : reservation.desiredDate.toISOString().slice(0, 10)}
                   </p>
                   <p className="mt-1 text-sm text-forest-muted">
-                    {reservation.durationMinutes}分 · チケット{" "}
-                    {reservation.tickets.length}枚
+                    {reservation.durationMinutes}分 ·{" "}
+                    {reservation.tickets
+                      .map((ticket) => getTimeTicketLabel(ticket.kind))
+                      .join("、")}
                   </p>
                   <p className="mt-2 text-sm text-forest">
                     {reservation.nickname}（
@@ -129,7 +170,16 @@ export default async function AdminReservationsPage() {
                 >
                   <div className="flex justify-between gap-2">
                     <span className="font-medium text-forest">
-                      {reservation.desiredDate.toISOString().slice(0, 10)}
+                      {reservation.startAt
+                        ? new Intl.DateTimeFormat("ja-JP", {
+                            timeZone: "Asia/Tokyo",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hourCycle: "h23",
+                          }).format(reservation.startAt)
+                        : reservation.desiredDate.toISOString().slice(0, 10)}
                     </span>
                     <span className="text-forest-muted">
                       {statusLabel[reservation.status] ?? reservation.status}

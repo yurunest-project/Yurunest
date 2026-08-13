@@ -11,6 +11,13 @@ export function SiteHeader() {
   const pathname = usePathname();
   const drawerId = useId();
   const { data: session } = useSession();
+  const role = session?.user?.role;
+  const visibleNavItems =
+    role === "EMPLOYEE"
+      ? navItems.filter(
+          ({ href }) => href !== "/tickets/buy" && href !== "/reservations",
+        )
+      : navItems;
 
   useEffect(() => {
     setOpen(false);
@@ -141,17 +148,77 @@ export function SiteHeader() {
                 </li>
               )}
               {session?.user?.role === "ADMIN" && (
-                <li>
-                  <a
-                    href="/admin/reservations"
-                    className="block rounded-lg px-3 py-3.5 text-base text-forest transition-colors hover:bg-sage/10 hover:text-sage-dark focus-visible:outline-offset-2"
-                    onClick={close}
-                  >
-                    予約管理（管理者）
-                  </a>
-                </li>
+                <>
+                  <li>
+                    <a
+                      href="/admin/reservations"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      予約管理
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/admin/shifts"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      シフト管理
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/admin/employees"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      スタッフ管理
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/admin/tickets"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      チケット管理
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/admin/refunds"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      返金管理
+                    </a>
+                  </li>
+                </>
               )}
-              {navItems.map(({ href, label }) => (
+              {role === "EMPLOYEE" && (
+                <>
+                  <li>
+                    <a
+                      href="/employee/reservations"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      予約一覧
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href="/employee/shifts"
+                      className="block rounded-lg px-3 py-3.5 text-base font-medium text-forest transition-colors hover:bg-sage/10"
+                      onClick={close}
+                    >
+                      シフト登録
+                    </a>
+                  </li>
+                </>
+              )}
+              {visibleNavItems.map(({ href, label }) => (
                 <li key={href}>
                   <a
                     href={href}

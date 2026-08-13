@@ -1,5 +1,4 @@
 import type { NextAuthConfig } from "next-auth";
-import type { UserRole } from "@prisma/client";
 
 export default {
   trustHost: true,
@@ -18,14 +17,19 @@ export default {
         token.id = user.id;
         token.role = user.role;
         token.nickname = user.nickname;
+        token.employeeId = user.employeeId;
       }
       return token;
     },
     session({ session, token }) {
       if (session.user) {
         session.user.id = String(token.id ?? "");
-        session.user.role = token.role as UserRole;
+        session.user.role =
+          (token.role as "CUSTOMER" | "ADMIN" | "EMPLOYEE" | undefined) ??
+          "CUSTOMER";
         session.user.nickname = String(token.nickname ?? "");
+        session.user.employeeId =
+          typeof token.employeeId === "string" ? token.employeeId : undefined;
       }
       return session;
     },

@@ -2,7 +2,7 @@ import Link from "next/link";
 import { SectionHeading } from "@/components/SectionHeading";
 import { HomePurchaseCTA } from "@/components/HomePurchaseCTA";
 import { BOOKING_PLANS, HITOMOSHI_URL } from "@/lib/constants";
-import { hitomoshiLinks } from "@/lib/navigation";
+import { legalLinks } from "@/lib/navigation";
 
 const reasons = [
   {
@@ -16,7 +16,7 @@ const reasons = [
       "入会金・月会費なし。必要な夜だけ、時間を選んでご利用いただけます。長めのご利用ほど1分あたりの料金もお得になります。",
   },
   {
-    title: "安心の【事前決済 ＆ 全額返金保証】",
+    title: "安心の【チケット制 ＆ 全額返金保証】",
     description:
       "少しでもご満足いただけなかった場合、理由を問わず全額返金いたします。お金を無駄にするリスクは一切ありません。",
   },
@@ -29,7 +29,7 @@ const steps = [
   },
   {
     step: 2,
-    title: "15分チケットを購入（Stripe決済）",
+    title: "利用時間に合ったチケットを購入（Stripe決済）",
   },
   {
     step: 3,
@@ -45,7 +45,7 @@ function PricingTable() {
   return (
     <div>
       <p className="mb-5 pl-4 text-base leading-relaxed text-forest-muted">
-        入会金・月会費はかかりません。ご希望の時間を選んで、Stripeで事前決済してください。
+        入会金・月会費はかかりません。利用時間に合ったチケットを購入し、ご希望の日時で予約してください。余った時間は別の時間別チケットとして返還されます。
       </p>
 
       <div className="overflow-hidden rounded-2xl border border-sage/20 bg-white">
@@ -278,39 +278,20 @@ export default function HomePage() {
           className="mb-6 flex flex-col items-center gap-3 pt-4 sm:flex-row sm:justify-center sm:gap-6"
           aria-label="法的情報"
         >
-          <a
-            href={hitomoshiLinks.tokushoho}
-            target="_blank"
-            rel="noopener noreferrer"
+          <Link
+            href={legalLinks.tokushoho}
             className="text-base text-forest-muted underline-offset-4 transition-colors hover:text-sage-dark hover:underline"
           >
             特定商取引法に基づく表記
-          </a>
-          <a
-            href={hitomoshiLinks.privacy}
-            target="_blank"
-            rel="noopener noreferrer"
+          </Link>
+          <Link
+            href={legalLinks.privacy}
             className="text-base text-forest-muted underline-offset-4 transition-colors hover:text-sage-dark hover:underline"
           >
             プライバシーポリシー
-          </a>
+          </Link>
         </nav>
       </main>
-
-      <footer className="border-t border-sage/15 bg-ivory px-5 py-6 text-center">
-        <p className="text-base text-forest-muted">
-          運営：
-          <a
-            href={HITOMOSHI_URL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sage-dark underline-offset-4 hover:underline"
-          >
-            ひともし
-          </a>
-        </p>
-        <p className="mt-2 text-base text-forest-muted">© 2026 Yurunest Project</p>
-      </footer>
 
       <div
         className="fixed inset-x-0 bottom-0 z-50 border-t border-sage/15 bg-ivory/95 px-4 py-3 backdrop-blur-sm sm:px-6"

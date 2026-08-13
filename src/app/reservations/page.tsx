@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { auth } from "@/auth";
 import { CancelReservationButton } from "@/components/CancelReservationButton";
+import { getTimeTicketLabel } from "@/lib/constants";
 import { prisma } from "@/lib/prisma";
 import { redirect } from "next/navigation";
 
@@ -33,7 +34,11 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
     include: {
       requestedEmployee: { select: { name: true } },
       assignedEmployee: { select: { name: true } },
-      tickets: { select: { id: true } },
+      tickets: { select: { id: true, kind: true } },
+      issuedChangeTickets: {
+        where: { status: { not: "voided" } },
+        select: { id: true, kind: true },
+      },
     },
   });
 
@@ -83,11 +88,23 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-lg font-bold text-forest">
-                      {reservation.desiredDate.toISOString().slice(0, 10)}
+                      {reservation.startAt
+                        ? new Intl.DateTimeFormat("ja-JP", {
+                            timeZone: "Asia/Tokyo",
+                            year: "numeric",
+                            month: "numeric",
+                            day: "numeric",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                            hourCycle: "h23",
+                          }).format(reservation.startAt)
+                        : reservation.desiredDate.toISOString().slice(0, 10)}
                     </p>
                     <p className="mt-1 text-sm text-forest-muted">
-                      {reservation.durationMinutes}分 · チケット{" "}
-                      {reservation.tickets.length}枚
+                      {reservation.durationMinutes}分 ·{" "}
+                      {reservation.tickets
+                        .map((ticket) => getTimeTicketLabel(ticket.kind))
+                        .join("、")}
                     </p>
                   </div>
                   <span className="rounded-full bg-sage/15 px-3 py-1 text-xs font-medium text-sage-dark">
@@ -97,6 +114,14 @@ export default async function ReservationsPage({ searchParams }: PageProps) {
                 <p className="mt-3 text-sm text-forest">
                   ニックネーム: {reservation.nickname}
                 </p>
+                {reservation.issuedChangeTickets.length > 0 && (
+                  <p className="mt-2 text-sm text-sage-dark">
+                    余り時間の返還:{" "}
+                    {reservation.issuedChangeTickets
+                      .map((ticket) => getTimeTicketLabel(ticket.kind))
+                      .join("、")}
+                  </p>
+                )}
                 {(reservation.requestedEmployee ||
                   reservation.assignedEmployee) && (
                   <p className="mt-1 text-sm text-forest-muted">

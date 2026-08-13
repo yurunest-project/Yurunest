@@ -1,9 +1,11 @@
 import { auth } from "@/auth";
 import { createTicketCheckoutSession } from "@/lib/tickets";
+import { getTimeTicketByKind, type TicketKindKey } from "@/lib/constants";
 import { NextResponse } from "next/server";
 
 type CheckoutBody = {
   quantity?: number;
+  ticketKind?: string;
 };
 
 export async function POST(request: Request) {
@@ -26,9 +28,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
   }
 
+  const ticketKind = body.ticketKind?.trim() as TicketKindKey | undefined;
+  const ticket = ticketKind ? getTimeTicketByKind(ticketKind) : undefined;
   const quantity = Number(body.quantity ?? 1);
-  if (!Number.isInteger(quantity) || quantity < 1 || quantity > 40) {
-    return NextResponse.json({ error: "Invalid quantity" }, { status: 400 });
+  if (
+    !ticket ||
+    !Number.isInteger(quantity) ||
+    quantity < 1 ||
+    quantity > 40
+  ) {
+    return NextResponse.json({ error: "Invalid ticket" }, { status: 400 });
   }
 
   const origin =
@@ -41,6 +50,7 @@ export async function POST(request: Request) {
     const checkout = await createTicketCheckoutSession({
       userId: session.user.id,
       quantity,
+      ticketKind: ticket.kind,
       email: session.user.email,
       origin,
     });

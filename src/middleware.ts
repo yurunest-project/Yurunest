@@ -9,7 +9,7 @@ export default auth((req) => {
   const isLoggedIn = Boolean(req.auth);
   const role = req.auth?.user?.role;
 
-  const protectedPaths = ["/tickets", "/book", "/reservations"];
+  const protectedPaths = ["/tickets", "/reservations"];
   const needsAuth = protectedPaths.some(
     (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
   );
@@ -18,6 +18,11 @@ export default auth((req) => {
     const loginUrl = new URL("/login", req.nextUrl.origin);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+  if (needsAuth && role === "EMPLOYEE") {
+    return NextResponse.redirect(
+      new URL("/employee/reservations", req.nextUrl.origin),
+    );
   }
 
   if (pathname === "/admin" || pathname.startsWith("/admin/")) {
@@ -31,14 +36,25 @@ export default auth((req) => {
     }
   }
 
+  if (pathname === "/employee" || pathname.startsWith("/employee/")) {
+    if (!isLoggedIn) {
+      const loginUrl = new URL("/login", req.nextUrl.origin);
+      loginUrl.searchParams.set("callbackUrl", pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+    if (role !== "EMPLOYEE") {
+      return NextResponse.redirect(new URL("/", req.nextUrl.origin));
+    }
+  }
+
   return NextResponse.next();
 });
 
 export const config = {
   matcher: [
     "/tickets/:path*",
-    "/book/:path*",
     "/reservations/:path*",
     "/admin/:path*",
+    "/employee/:path*",
   ],
 };

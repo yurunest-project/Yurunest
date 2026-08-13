@@ -16,6 +16,9 @@ export default function TokushohoPage() {
         <p className="text-base leading-loose text-forest-muted">
           法的情報は運営母体「ひともし」のサイトで公開しています。
         </p>
+        <p className="mt-4 text-base leading-loose text-forest-muted">
+          未利用時間は原則として時間別チケットで返還します。サービス上の問題やクレーム等がある場合は、内容を確認したうえで購入単位の全額返金に対応します。詳細は運営規約をご確認ください。
+        </p>
         <p className="mt-6">
           <a
             href={hitomoshiLinks.tokushoho}

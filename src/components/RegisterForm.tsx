@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthShell, Field, authInputClassName } from "@/components/AuthShell";
+import { ResendVerificationForm } from "@/components/ResendVerificationForm";
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 
@@ -10,6 +11,7 @@ export function RegisterForm() {
   const [nickname, setNickname] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showResend, setShowResend] = useState(false);
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -17,6 +19,7 @@ export function RegisterForm() {
     setLoading(true);
     setError(null);
     setMessage(null);
+    setShowResend(false);
 
     const response = await fetch("/api/auth/register", {
       method: "POST",
@@ -24,10 +27,17 @@ export function RegisterForm() {
       body: JSON.stringify({ email, password, nickname }),
     });
 
-    const data = (await response.json()) as { error?: string; message?: string };
+    const data = (await response.json()) as {
+      error?: string;
+      message?: string;
+      code?: string;
+    };
 
     if (!response.ok) {
       setError(data.error ?? "登録に失敗しました");
+      if (response.status === 409 && data.code !== "ALREADY_REGISTERED") {
+        setShowResend(true);
+      }
       setLoading(false);
       return;
     }
@@ -81,15 +91,19 @@ export function RegisterForm() {
             {error}
           </p>
         )}
+        {showResend && <ResendVerificationForm defaultEmail={email} compact />}
         {message && (
-          <p className="rounded-xl border border-sage/30 bg-sage/10 px-4 py-3 text-sm text-forest">
-            {message}
-          </p>
+          <>
+            <p className="rounded-xl border border-sage/30 bg-sage/10 px-4 py-3 text-sm text-forest">
+              {message}
+            </p>
+            <ResendVerificationForm defaultEmail={email} compact />
+          </>
         )}
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || Boolean(message)}
           className="w-full rounded-xl bg-sage-dark px-4 py-3.5 text-base font-bold text-white hover:bg-[#4a6350] disabled:opacity-60"
         >
           {loading ? "送信中..." : "確認メールを送信"}

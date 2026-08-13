@@ -15,7 +15,7 @@ export default async function TicketsBuySuccessPage() {
       <p className="mb-6 text-base leading-relaxed text-forest-muted">
         お支払いが完了しました。チケットの反映には数秒かかることがあります。
         {session?.user
-          ? " 続けて希望日を選んで予約できます。"
+          ? " 続けて希望日時を選んで予約できます。"
           : ""}
       </p>
       <div className="space-y-3">
@@ -23,7 +23,7 @@ export default async function TicketsBuySuccessPage() {
           href="/reservations/new"
           className="block rounded-xl bg-sage-dark px-4 py-3.5 text-center font-bold text-white hover:bg-[#4a6350]"
         >
-          希望日を予約する
+          希望日時を予約する
         </Link>
         <Link
           href="/tickets/buy"

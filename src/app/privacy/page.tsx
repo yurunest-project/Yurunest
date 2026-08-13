@@ -18,6 +18,9 @@ export default function PrivacyPage() {
         <p className="text-base leading-loose text-forest-muted">
           ゆるネストの個人情報保護方針は、運営母体「ひともし」のプライバシーポリシーに準拠します。予約・決済時に取得するメールアドレス等は、サービス提供および通話URLの送付に利用します。
         </p>
+        <p className="mt-4 text-base leading-loose text-forest-muted">
+          チケットの利用・返還・返金に関する履歴は、サービス提供、不正利用防止およびお問い合わせ対応のために保存します。
+        </p>
         <p className="mt-6">
           <a
             href={hitomoshiLinks.privacy}

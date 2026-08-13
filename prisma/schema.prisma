@@ -17,6 +17,21 @@ enum TicketStatus {
   reserved
   consumed
   refunded
+  voided
+}
+
+enum TicketKind {
+  min15
+  min30
+  hour1
+  hour3
+  sleep5
+}
+
+enum TicketSource {
+  purchase
+  change
+  admin
 }
 
 enum ReservationStatus {
@@ -24,6 +39,11 @@ enum ReservationStatus {
   accepted
   declined
   cancelled
+}
+
+enum AvailabilitySlotStatus {
+  open
+  reserved
 }
 
 model User {
@@ -38,6 +58,7 @@ model User {
 
   tickets                 Ticket[]
   reservations            Reservation[]
+  refundHistories         RefundHistory[]
   emailVerificationTokens EmailVerificationToken[]
   passwordResetTokens     PasswordResetToken[]
 }
@@ -76,10 +97,11 @@ model Employee {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  requestedReservations Reservation[]        @relation("RequestedEmployee")
-  assignedReservations  Reservation[]        @relation("AssignedEmployee")
+  requestedReservations Reservation[]              @relation("RequestedEmployee")
+  assignedReservations  Reservation[]              @relation("AssignedEmployee")
   inviteTokens          EmployeeInviteToken[]
   declines              ReservationDecline[]
+  availabilitySlots     EmployeeAvailabilitySlot[]
 }
 
 model EmployeeInviteToken {
@@ -99,23 +121,35 @@ model Ticket {
   id                    String       @id @default(cuid())
   userId                String
   status                TicketStatus @default(unused)
+  kind                  TicketKind   @default(min15)
+  minutes               Int          @default(15)
+  source                TicketSource @default(purchase)
   stripePaymentIntentId String?
   reservationId         String?
+  parentTicketId        String?
+  issuedByReservationId String?
   createdAt             DateTime     @default(now())
   updatedAt             DateTime     @updatedAt
 
-  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  reservation Reservation?  @relation(fields: [reservationId], references: [id])
+  user                User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reservation         Reservation?      @relation(fields: [reservationId], references: [id])
+  parentTicket        Ticket?           @relation("TicketChange", fields: [parentTicketId], references: [id])
+  changeTickets       Ticket[]          @relation("TicketChange")
+  issuedByReservation Reservation?      @relation("IssuedChangeTickets", fields: [issuedByReservationId], references: [id], onDelete: SetNull)
+  changeLogs          TicketChangeLog[]
 
   @@index([userId, status])
   @@index([stripePaymentIntentId])
   @@index([reservationId])
+  @@index([parentTicketId])
+  @@index([issuedByReservationId])
 }
 
 model Reservation {
   id                  String            @id @default(cuid())
   userId              String
   desiredDate         DateTime          @db.Date
+  startAt             DateTime?
   durationMinutes     Int               @default(15)
   requestedEmployeeId String?
   assignedEmployeeId  String?
@@ -126,15 +160,67 @@ model Reservation {
   createdAt           DateTime          @default(now())
   updatedAt           DateTime          @updatedAt
 
-  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
-  tickets           Ticket[]
-  requestedEmployee Employee?            @relation("RequestedEmployee", fields: [requestedEmployeeId], references: [id])
-  assignedEmployee  Employee?            @relation("AssignedEmployee", fields: [assignedEmployeeId], references: [id])
-  declines          ReservationDecline[]
+  user                User                       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tickets             Ticket[]
+  issuedChangeTickets Ticket[]                   @relation("IssuedChangeTickets")
+  ticketChangeLogs    TicketChangeLog[]
+  requestedEmployee   Employee?                  @relation("RequestedEmployee", fields: [requestedEmployeeId], references: [id])
+  assignedEmployee    Employee?                  @relation("AssignedEmployee", fields: [assignedEmployeeId], references: [id])
+  declines            ReservationDecline[]
+  availabilitySlots   EmployeeAvailabilitySlot[]
 
   @@index([userId])
   @@index([assignedEmployeeId, status])
   @@index([desiredDate])
+  @@index([startAt])
+}
+
+model TicketChangeLog {
+  id               String   @id @default(cuid())
+  consumedTicketId String
+  reservationId    String
+  usedMinutes      Int
+  returnedMinutes  Int
+  createdAt        DateTime @default(now())
+
+  consumedTicket Ticket      @relation(fields: [consumedTicketId], references: [id], onDelete: Cascade)
+  reservation    Reservation @relation(fields: [reservationId], references: [id], onDelete: Cascade)
+
+  @@index([reservationId])
+  @@index([consumedTicketId])
+}
+
+model RefundHistory {
+  id                    String   @id @default(cuid())
+  userId                String
+  stripePaymentIntentId String
+  stripeRefundId        String   @unique
+  reason                String
+  amount                Int?
+  createdAt             DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([stripePaymentIntentId])
+}
+
+model EmployeeAvailabilitySlot {
+  id            String                 @id @default(cuid())
+  employeeId    String
+  startAt       DateTime
+  status        AvailabilitySlotStatus @default(open)
+  reservationId String?
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+
+  employee    Employee     @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  reservation Reservation? @relation(fields: [reservationId], references: [id], onDelete: SetNull)
+
+  @@unique([employeeId, startAt])
+  @@index([employeeId, startAt, status])
+  @@index([startAt, status])
+  @@index([reservationId])
 }
 
 model ReservationDecline {
